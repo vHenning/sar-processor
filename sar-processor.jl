@@ -388,7 +388,3 @@ shape = size(cimg)
 azcompmag = abs.(view(cimg,1:16:shape[1],1:4:shape[2]));
 azcompmag = reverse(azcompmag,dims=1)
 imshow(azcompmag);
-
-# save range and azimuth compressed file as a "single-look complex"
-Serialization.serialize(open("$pathname/$imagename.slc","w"),azcomp)
-
