@@ -91,7 +91,7 @@ aspectRatio = rangeCellLength/(vorbital/PRF)
 println("Aspect Ratio: ",round(aspectRatio,digits=1))
 
 print("Reading Data... ");
-smallSignals = readData(pathname, imagename);
+smallSignals = readData(pathname, imagename, rangeCells);
 println("done")
 
 print("Starting Deconvolution... ");

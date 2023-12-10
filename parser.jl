@@ -2,7 +2,7 @@ function parseMetadata()
 
 end
 
-function readData(pathname, imagename)
+function readData(pathname, imagename, rangeCells)
     file = open("$pathname/$imagename.0__A")
 
     imageDescriptor = parseFile(file,imageFileDescrictorScheme)
