@@ -13,7 +13,6 @@ function parseMetadata(pathname, metadataName, rangeCells)
     
     #process header
     chirpFFT = let
-        f = parse(Float64,split(rec.fields[rec.key["coeffs"]])[1])
         fdot = -parse(Float64,split(rec.fields[rec.key["coeffs"]])[2])
         sampleRate = parse(Float64,rec.fields[rec.key["samplingRate"]])*1e6     #Hz
         pulseLength = parse(Float64,rec.fields[rec.key["pulseLength"]])*1e-6   #s
@@ -28,21 +27,9 @@ function parseMetadata(pathname, metadataName, rangeCells)
         fft(chirp)
     end
     
-    vorbital = let 
-        a = (6371+628)*1000.0  #m            #https://www.eorc.jaxa.jp/ALOS-2/en/about/overview.htm
-        G = 6.67408e-11
-        Me= 5.97219e24       #kg
-        P = sqrt(4*pi^2/(G*Me)*a^3)
-        2pi*a/P            #These are terrible assumptions!!!!!!!
-    end
-    vorbital = 7593
-    Vr = vorbital  # TODO: remove reference to redundant var Vr
-    
     wavelength = parse(Float32,rec.fields[rec.key[  "wavelength" ]]) #m 
-    #antenna length
-    La = 8.9 #m
-    
-    return (chirpFFT, pulseSamples, sampleRate, PRF, wavelength, vorbital, La, Vr);
+
+    return (chirpFFT, pulseSamples, sampleRate, PRF, wavelength);
 end
 
 function readData(pathname, imagename, rangeCells)

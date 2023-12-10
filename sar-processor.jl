@@ -12,10 +12,12 @@ metadataName = "LED-ALPSRP273530900-H1"
 
 R0 = 848665     #m
 c = 3e8
+Vr = 7593
+La = 8.9 #m
 rangeCells = 5000
 
 print("Parsing Metadata... ");
-(chirpFFT, pulseSamples, sampleRate, PRF, wavelength, vorbital, La, Vr) = parseMetadata(pathname, metadataName, rangeCells);
+(chirpFFT, pulseSamples, sampleRate, PRF, wavelength) = parseMetadata(pathname, metadataName, rangeCells);
 println("done");
 
 print("Reading Data... ");
@@ -33,7 +35,7 @@ cimg = rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0, Vr);
 println("done");
 
 print("Starting Azimuth Compression... ");
-cimg = azimuthCompression(cimg, vorbital, La, wavelength, R0, PRF);
+cimg = azimuthCompression(cimg, Vr, La, wavelength, R0, PRF);
 println("done");
 
 shape = size(cimg)
