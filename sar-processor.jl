@@ -172,14 +172,6 @@ print("Starting Range Migration... ");
 cimg = rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0);
 println("done");
 
-# show fourier transformed cimg
-# the curves that will be corrected
-# by range cell migration should be visible
-shape = size(cimg)
-rccftpost = (abs.(view(cimg,
-                2:100:shape[1],
-                3600+54:1:3600+473)))
-
 theta(s,R) = atan(vorbital*s/R)
 
 #one way beam pattern:
