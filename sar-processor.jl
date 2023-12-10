@@ -1,3 +1,5 @@
+using Dates
+
 include("tools.jl");
 include("processingFunctions.jl");
 include("parser.jl")
@@ -20,9 +22,12 @@ print("Reading Data... ");
 smallSignals = readData(pathname, imagename, rangeCells);
 println("done")
 
+start = now();
+
+deconvStart = now();
 print("Starting Deconvolution... ");
 cimg = deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples);
-println("done");
+println("Deconvolution done. Time $(now() - deconvStart)");
 
 GC.gc();
 
@@ -37,5 +42,7 @@ println("done");
 shape = size(cimg)
 azcompmag = abs.(view(cimg,1:16:shape[1],1:4:shape[2]));
 azcompmag = reverse(azcompmag,dims=1)
+
+println("Total time $(now() - start)");
 
 saveImg(azcompmag, "finalImage.png");
