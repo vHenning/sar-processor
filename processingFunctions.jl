@@ -20,14 +20,6 @@ function rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0)
     # run an fft on each column of cimg (echos are rows here)
     cimg = Complex{Float16}.(fft(Complex{Float32}.(cimg),(1)));
 
-    # show fourier transformed cimg
-    # the curves that will be corrected
-    # by range cell migration should be visible
-    shape = size(cimg)
-    rccftpre = (abs.(view(cimg,
-                    2:100:shape[1],
-                    3600+54:1:3600+473)))
-
     #now we want to shift each frequency in range space, so make each frequency bin a column for speed
     cimg = cimg'
     shape = size(cimg)
@@ -49,12 +41,6 @@ function rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0)
         #interpolation
         #NEAREST NEIGHBOR - bad!
         cimg[:,i] = vcat(cimg[cellshift+1:shape[1],i],zeros(Complex{Float64},cellshift))
-        
-        if n%10000==0
-            print(n)
-            print("  ")
-            println(cellshift)
-        end
     end
     return cimg'
 end
