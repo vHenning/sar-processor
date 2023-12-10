@@ -1,7 +1,3 @@
-using ImageView
-using Serialization
-using FFTW
-
 include("tools.jl");
 include("processingFunctions.jl");
 include("parser.jl")

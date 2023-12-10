@@ -1,3 +1,5 @@
+using FFTW
+
 function parseMetadata(pathname, metadataName, rangeCells)
     file = open("$pathname/$metadataName.0__A")
     rec = parseFile(file,datasetSummaryRecordScheme,720)
