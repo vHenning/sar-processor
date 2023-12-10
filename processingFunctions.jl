@@ -44,3 +44,53 @@ function rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0)
     end
     return cimg'
 end
+
+function azimuthCompression(cimg, vorbital, La, wavelength, R0, PRF)
+    theta(s,R) = atan(vorbital*s/R)
+
+    #one way beam pattern:
+    p(a) = sinc(a*La/wavelength)
+    w(s,R) = p(theta(s,R))^2
+
+    Rc = R0+10000        # TODO where does 10000 come from? I think this is a focusing dist choice
+
+    R(s) = Rc - 1/2*vorbital^2/Rc*s^2
+
+    C(s) = exp(-4pi*im/wavelength*R(s))*w(s,Rc)
+
+    complexAzimuthFFT = let
+        width = 200   # TODO where does this come from?
+        s = 1/PRF*(range(-width, stop = width) |> collect)
+
+        sig = C.(s)/sqrt(width)
+        
+        azimuth = vcat(sig, zeros(Complex{Float32},size(cimg)[1]-length(sig)))
+
+        fft(azimuth)
+    end
+
+    print("Ready")
+
+    for i = 1:size(cimg)[2]
+        line = Complex{Float32}.(cimg[:,i])
+        
+        ####### Azimuth Compression
+        
+        #lineFFT = fft(line)
+        lineFFT = cimg[:,i]
+        #lineFFT = fft(Complex{Float32}.(cimg[:,i]))
+        crossCorrelated = AbstractFFTs.ifft(conj.(complexAzimuthFFT).*lineFFT)
+        
+        ####### End Azimuth Compression
+        
+        
+        #complex = Complex.(I,Q)
+        result = abs.( crossCorrelated )
+        cimg[:,i] = result
+        if i%1000 == 1
+            print("#")
+        end
+    end
+
+    return cimg;
+end
