@@ -1,37 +1,20 @@
-using FFTW
-
 function parseMetadata(pathname, metadataName, rangeCells)
     file = open("$pathname/$metadataName.0__A")
     rec = parseFile(file,datasetSummaryRecordScheme,720)
     close(file)
     
     PRF = parse(Float64,rec.fields[rec.key["PRF"]])/1000
-    
     sampleRate = parse(Float64,rec.fields[rec.key["samplingRate"]])*1e6     #Hz
     pulseSamples = let
         pulseLength = parse(Float64,rec.fields[rec.key["pulseLength"]])*1e-6   #s
         Integer(floor(pulseLength*sampleRate))
     end
-    
-    #process header
-    chirpFFT = let
-        fdot = -parse(Float64,split(rec.fields[rec.key["coeffs"]])[2])
-        sampleRate = parse(Float64,rec.fields[rec.key["samplingRate"]])*1e6     #Hz
-        pulseLength = parse(Float64,rec.fields[rec.key["pulseLength"]])*1e-6   #s
-        pulseSamples = Integer(floor(pulseLength*sampleRate))
-    
-        Sif(t) = exp(pi*im*fdot*t^2)
-        t = 1/sampleRate* (range(1, stop = pulseSamples) |> collect)
-        t = t.-maximum(t)/2
-        sig = Sif.(t)/sqrt(pulseSamples)
-        chirp = vcat(sig,zeros(Complex{Float32}, rangeCells))
-    
-        fft(chirp)
-    end
-    
+    fdot = -parse(Float64,split(rec.fields[rec.key["coeffs"]])[2])
+    sampleRate = parse(Float64,rec.fields[rec.key["samplingRate"]])*1e6     #Hz
+    pulseLength = parse(Float64,rec.fields[rec.key["pulseLength"]])*1e-6   #s
     wavelength = parse(Float32,rec.fields[rec.key[  "wavelength" ]]) #m 
 
-    return (chirpFFT, pulseSamples, sampleRate, PRF, wavelength);
+    return (pulseSamples, sampleRate, PRF, wavelength, fdot, sampleRate, pulseLength);
 end
 
 function readData(pathname, imagename, rangeCells)

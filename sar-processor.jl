@@ -13,7 +13,7 @@ La = 8.9 #m
 rangeCells = 5000
 
 print("Parsing Metadata... ");
-(chirpFFT, pulseSamples, sampleRate, PRF, wavelength) = parseMetadata(pathname, metadataName, rangeCells);
+(pulseSamples, sampleRate, PRF, wavelength, fdot, sampleRate, pulseLength) = parseMetadata(pathname, metadataName, rangeCells);
 println("done");
 
 print("Reading Data... ");
@@ -21,7 +21,7 @@ smallSignals = readData(pathname, imagename, rangeCells);
 println("done")
 
 print("Starting Deconvolution... ");
-cimg = deconvolve(smallSignals, chirpFFT, pulseSamples);
+cimg = deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples);
 println("done");
 
 GC.gc();

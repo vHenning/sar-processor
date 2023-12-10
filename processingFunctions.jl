@@ -1,6 +1,18 @@
 using FFTW
 
-function deconvolve(smallSignals, chirpFFT, pulseSamples)
+function deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
+    chirpFFT = let
+        pulseSamples = Integer(floor(pulseLength*sampleRate))
+
+        Sif(t) = exp(pi*im*fdot*t^2)
+        t = 1/sampleRate* (range(1, stop = pulseSamples) |> collect)
+        t = t.-maximum(t)/2
+        sig = Sif.(t)/sqrt(pulseSamples)
+        chirp = vcat(sig,zeros(Complex{Float32}, rangeCells))
+
+        fft(chirp)
+    end
+
     shape = size(smallSignals)
 
     # add zero padding at the beginning of each pulse echo (each column is an echo)
