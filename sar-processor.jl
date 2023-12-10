@@ -3,6 +3,7 @@ using Serialization
 using FFTW
 
 include("tools.jl");
+include("processingFunctions.jl");
 
 pathname = "../data/"    # relative path of folder containing L1.0 data
 imagename = "IMG-HH-ALPSRP273530900-H1"  # which image polarization to use - IMG-HH or IMG-HV for PALSAR
@@ -159,46 +160,13 @@ end
 
 signalRecords = []  #free up signalRecords - now using smallSignals
 
-print("Done")
+println("Done")
 
-# TODO: serialize smallSignals?
-#Serialization.serialize(open("$pathname/smallSignalsBigger.ser","w"),smallSignals)
+print("Starting Deconvolution... ");
+cimg = deconvolve(smallSignals, chirpFFT, pulseSamples);
+println("done");
 
-shape = size(smallSignals)
-rawMagnitude = abs.(view(smallSignals,1:10:shape[1],1:40:shape[2]));
-rawMagnitude = reverse(rawMagnitude,dims=1)
-# TODO: might want to extend the width of the image by pulseSamples before downsizing,
-# as was done in the original version. See snippet below:
-# vcat(zeros(Complex{Float16},pulseSamples),smallSignals[:,i])
-
-# deconvolution by the chirp signal
-
-shape = size(smallSignals)
-
-# add zero padding at the beginning of each pulse echo (each column is an echo)
-cimg = vcat(zeros(Complex{Float32},(pulseSamples,shape[2])),
-             Complex{Float32}.(smallSignals));
-
-fft!(cimg,(1)); # perform an FFT on each column (each pulse echo)
-
-cimg =  cimg .* conj.(chirpFFT) ; # convolution with chirp signal performed in frequency domain
-
-ifft!(cimg,(1)); # perform an inverse FFT on each column (each pulse echo)
-cimg = Complex{Float16}.(cimg');  #transpose so that each echo is a horizontal line
-smallSignals = [] # free up memory of smallSignals
-
-shape = size(cimg)
-rangeCompressedMagnitude = abs.(view(cimg,1:40:shape[1],1:10:shape[2]));
-rangeCompressedMagnitude = reverse(rangeCompressedMagnitude,dims=1)
-
-Serialization.serialize(open("$pathname/$imagename.rcc","w"),cimg)
-cimg = [];
 GC.gc();
-
-cimg = Serialization.deserialize(open("$pathname/$imagename.rcc","r"))
-print("Loaded")
-
-saveImg(abs.(cimg), "cimg.png");
 
 # run an fft on each column of cimg (echos are rows here)
 cimg = Complex{Float16}.(fft(Complex{Float32}.(cimg),(1)));
