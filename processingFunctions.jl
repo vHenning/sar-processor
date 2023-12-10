@@ -55,7 +55,6 @@ function azimuthCompression(cimg, vorbital, La, wavelength, R0, PRF)
     Rc = R0+10000        # TODO where does 10000 come from? I think this is a focusing dist choice
 
     R(s) = Rc - 1/2*vorbital^2/Rc*s^2
-
     C(s) = exp(-4pi*im/wavelength*R(s))*w(s,Rc)
 
     complexAzimuthFFT = let
@@ -69,27 +68,14 @@ function azimuthCompression(cimg, vorbital, La, wavelength, R0, PRF)
         fft(azimuth)
     end
 
-    print("Ready")
-
     for i = 1:size(cimg)[2]
-        line = Complex{Float32}.(cimg[:,i])
-        
         ####### Azimuth Compression
-        
-        #lineFFT = fft(line)
         lineFFT = cimg[:,i]
-        #lineFFT = fft(Complex{Float32}.(cimg[:,i]))
         crossCorrelated = AbstractFFTs.ifft(conj.(complexAzimuthFFT).*lineFFT)
-        
         ####### End Azimuth Compression
         
-        
-        #complex = Complex.(I,Q)
         result = abs.( crossCorrelated )
         cimg[:,i] = result
-        if i%1000 == 1
-            print("#")
-        end
     end
 
     return cimg;
