@@ -31,28 +31,10 @@ function readData(pathname, imagename)
         parsedRecord.fields[parsedRecord.key["signalData"]] = []  #remove original signalData from record!
         
         push!(signalRecords,parsedRecord)
-        if(i%10000==0)
-            print(i)
-            print("   ")
-            print(Base.summarysize(parsedRecord))
-            print("B    ")
-            print(Base.summarysize(signalRecords)/1e6)
-            println(" MB")
-        end
     end
-    print(Base.summarysize(signalRecords)/1e6)
-    println(" MB")
     
     close(file)
     
-    # # save signalRecords for later use
-    # Serialization.serialize(open("$pathname/$imagename-signal-records.ser","w"),signalRecords)
-    # signalRecords = [];  # free up the memory of the signalRecords object - it'll be read back in later
-    
-    # # load serialized version of signalRecords if not loaded from file above
-    # signalRecords = Serialization.deserialize(open("$pathname/$imagename-signal-records.ser","r"))
-    # print("Loaded signalRecords")
-
     #sub image formation:
     sampleNum = rangeCells #how many samples of each echo to keep - keep all range cells by default
     echoNum = 35000  #how many echos to keep
@@ -73,6 +55,7 @@ function readData(pathname, imagename)
     end
 
     signalRecords = []  #free up signalRecords - now using smallSignals
+    GC.gc();
 
     return smallSignals;
 end
