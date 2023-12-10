@@ -16,7 +16,7 @@ function deconvolve(smallSignals, chirpFFT, pulseSamples)
     return cimg;
 end
 
-function rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0)
+function rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0, Vr)
     # run an fft on each column of cimg (echos are rows here)
     cimg = Complex{Float16}.(fft(Complex{Float32}.(cimg),(1)));
 
