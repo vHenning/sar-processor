@@ -1,6 +1,7 @@
 using FFTW
 
 function deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
+    # Create fourier transform of chirp. This is fast.
     chirpFFT = let
         pulseSamples = Integer(floor(pulseLength*sampleRate))
 
@@ -16,8 +17,10 @@ function deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
     shape = size(smallSignals)
 
     # add zero padding at the beginning of each pulse echo (each column is an echo)
-    cimg = vcat(zeros(Complex{Float32},(pulseSamples,shape[2])),
-                Complex{Float32}.(smallSignals));
+    cimg = vcat(zeros(Complex{Float32},(pulseSamples,shape[2])), Complex{Float32}.(smallSignals));
+
+    pulseSamples = [];
+    GC.gc();
 
     fft!(cimg,(1)); # perform an FFT on each column (each pulse echo)
 
