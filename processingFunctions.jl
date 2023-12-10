@@ -39,9 +39,7 @@ function deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
     ifft!(cimg,(1)); # perform an inverse FFT on each column (each pulse echo)
     println("ifft time $(now() - start)");
 
-    start = now();
     cimg = cimg';
-    println("trans time $(now() - start)");
     smallSignals = [] # free up memory of smallSignals
 
     return cimg;
