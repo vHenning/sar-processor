@@ -40,7 +40,7 @@ function deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
     println("ifft time $(now() - start)");
 
     start = now();
-    cimg = Complex{Float16}.(cimg');  #transpose so that each echo is a horizontal line
+    cimg = cimg';
     println("trans time $(now() - start)");
     smallSignals = [] # free up memory of smallSignals
 
