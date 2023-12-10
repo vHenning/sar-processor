@@ -167,7 +167,6 @@ print("Done")
 shape = size(smallSignals)
 rawMagnitude = abs.(view(smallSignals,1:10:shape[1],1:40:shape[2]));
 rawMagnitude = reverse(rawMagnitude,dims=1)
-imshow(rawMagnitude);
 # TODO: might want to extend the width of the image by pulseSamples before downsizing,
 # as was done in the original version. See snippet below:
 # vcat(zeros(Complex{Float16},pulseSamples),smallSignals[:,i])
@@ -191,7 +190,6 @@ smallSignals = [] # free up memory of smallSignals
 shape = size(cimg)
 rangeCompressedMagnitude = abs.(view(cimg,1:40:shape[1],1:10:shape[2]));
 rangeCompressedMagnitude = reverse(rangeCompressedMagnitude,dims=1)
-imshow(rangeCompressedMagnitude);
 
 Serialization.serialize(open("$pathname/$imagename.rcc","w"),cimg)
 cimg = [];
@@ -199,6 +197,8 @@ GC.gc();
 
 cimg = Serialization.deserialize(open("$pathname/$imagename.rcc","r"))
 print("Loaded")
+
+saveImg(abs.(cimg), "cimg.png");
 
 # run an fft on each column of cimg (echos are rows here)
 cimg = Complex{Float16}.(fft(Complex{Float32}.(cimg),(1)));
@@ -210,7 +210,6 @@ shape = size(cimg)
 rccftpre = (abs.(view(cimg,
                 2:100:shape[1],
                 3600+54:1:3600+473)))
-imshow(rccftpre);
 
 #now we want to shift each frequency in range space, so make each frequency bin a column for speed
 cimg = cimg'
@@ -250,7 +249,6 @@ shape = size(cimg)
 rccftpost = (abs.(view(cimg,
                 2:100:shape[1],
                 3600+54:1:3600+473)))
-imshow(rccftpost);
 
 theta(s,R) = atan(vorbital*s/R)
 
@@ -301,4 +299,5 @@ end
 shape = size(cimg)
 azcompmag = abs.(view(cimg,1:16:shape[1],1:4:shape[2]));
 azcompmag = reverse(azcompmag,dims=1)
-imshow(azcompmag);
+
+saveImg(azcompmag, "finalImage.png");

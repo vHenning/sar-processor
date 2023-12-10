@@ -1,3 +1,5 @@
+using Images
+
 function bytesToString(file, start, stop)
     len = stop-start+1
     seek(file,start-1)
@@ -84,4 +86,9 @@ function parseFile(file,scheme,offset=0)
         push!(results, f(file,start+offset,stop+offset))
     end
     return (key=keyMap, fields=results)
+end
+
+function saveImg(image, name)
+    data_scaled = (image .- minimum(image)) / (maximum(image) - minimum(image))
+    save("$name.png", colorview(Gray, data_scaled));
 end
