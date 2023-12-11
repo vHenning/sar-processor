@@ -1,7 +1,8 @@
-using FFTW
 using Dates
+using Distributed
+using FFTW
 
-function deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
+function deconvolve(cpus, smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
     # Create fourier transform of chirp. This is fast.
     chirpFFT = let
         pulseSamples = Integer(floor(pulseLength*sampleRate))
@@ -15,34 +16,35 @@ function deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
         fft(chirp)
     end
 
-    shape = size(smallSignals)
+    cols = size(smallSignals)[2];
+    colsPerCPU = Int64(floor(cols / cpus));
 
-    println();
+    futures = [];
+    for i = 0:cpus-1
+        subArray = smallSignals[:, i * colsPerCPU + 1:(i+1) * colsPerCPU];
+        push!(futures, @spawn smallDeconv(subArray, pulseSamples, chirpFFT));
+    end
 
-    start = now();
-    # add zero padding at the beginning of each pulse echo (each column is an echo)
-    cimg = vcat(zeros(Complex{Float32},(pulseSamples,shape[2])), Complex{Float32}.(smallSignals));
-    println("vcat time $(now() - start)");
-
-    pulseSamples = [];
-    GC.gc();
-
-    start = now();
-    fft!(cimg,(1)); # perform an FFT on each column (each pulse echo)
-    println("fft  time $(now() - start)");
-
-    start = now();
-    cimg =  cimg .* conj.(chirpFFT) ; # convolution with chirp signal performed in frequency domain
-    println("conv time $(now() - start)");
-
-    start = now();
-    ifft!(cimg,(1)); # perform an inverse FFT on each column (each pulse echo)
-    println("ifft time $(now() - start)");
+    # Futures are ordered, so we can just combine the results in the order of the futures in the list
+    cimg = zeros(ComplexF32, size(smallSignals)[1] + pulseSamples, size(smallSignals)[2]);
+    for i = 0:cpus-1
+        cimg[:, i * colsPerCPU + 1:(i+1) * colsPerCPU] = fetch(futures[i+1]);
+    end
 
     cimg = cimg';
     smallSignals = [] # free up memory of smallSignals
+    GC.gc();
 
     return cimg;
+end
+
+@everywhere function smallDeconv(imagePart, pulseSamples::Int64, chirpFFT)
+    shape = size(imagePart);
+    imagePart = vcat(zeros(Complex{Float32},(pulseSamples,shape[2])), Complex{Float32}.(imagePart));
+    fft!(imagePart, (1));
+    imagePart = imagePart .* conj.(chirpFFT);
+    ifft!(imagePart, (1));
+    return imagePart;
 end
 
 function rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0, Vr)

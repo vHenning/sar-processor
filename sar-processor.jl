@@ -1,4 +1,11 @@
 using Dates
+using Distributed
+
+cpus = 10;
+newProcesses = cpus - size(workers(),1);
+addprocs(newProcesses);
+
+@everywhere using FFTW
 
 include("tools.jl");
 include("processingFunctions.jl");
@@ -14,6 +21,9 @@ Vr = 7593
 La = 8.9 #m
 rangeCells = 5000
 
+
+println("Running $(workers()) processes");
+
 print("Parsing Metadata... ");
 (pulseSamples, sampleRate, PRF, wavelength, fdot, sampleRate, pulseLength) = parseMetadata(pathname, metadataName, rangeCells);
 println("done");
@@ -26,7 +36,7 @@ start = now();
 
 deconvStart = now();
 print("Starting Deconvolution... ");
-cimg = deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples);
+cimg = deconvolve(cpus, smallSignals, fdot, sampleRate, pulseLength, pulseSamples);
 println("Deconvolution done. Time $(now() - deconvStart)");
 
 GC.gc();
