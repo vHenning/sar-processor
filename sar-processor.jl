@@ -1,3 +1,9 @@
+using Distributed
+
+cpus = 10;
+newProcesses = cpus - size(workers(),1);
+addprocs(newProcesses);
+
 include("tools.jl");
 include("processingFunctions.jl");
 include("parser.jl")
