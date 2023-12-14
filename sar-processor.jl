@@ -33,7 +33,7 @@ println("done");
 GC.gc();
 
 print("Starting Range Migration... ");
-cimg = rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0, Vr);
+@time cimg = rangeMigration(cpus, cimg, c, sampleRate, PRF, wavelength, R0, Vr);
 println("done");
 
 print("Starting Azimuth Compression... ");
