@@ -37,7 +37,7 @@ print("Starting Range Migration... ");
 println("done");
 
 print("Starting Azimuth Compression... ");
-cimg = azimuthCompression(cimg, Vr, La, wavelength, R0, PRF);
+cimg = azimuthCompression(cpus, cimg, Vr, La, wavelength, R0, PRF);
 println("done");
 
 shape = size(cimg)

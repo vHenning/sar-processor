@@ -81,7 +81,7 @@ end
     return Complex{Float16}.(fft(Complex{Float32}.(subImage),(1)));
 end
 
-function azimuthCompression(cimg, vorbital, La, wavelength, R0, PRF)
+function azimuthCompression(cpus, cimg, vorbital, La, wavelength, R0, PRF)
     theta(s,R) = atan(vorbital*s/R)
 
     #one way beam pattern:
@@ -104,15 +104,38 @@ function azimuthCompression(cimg, vorbital, La, wavelength, R0, PRF)
         fft(azimuth)
     end
 
-    for i = 1:size(cimg)[2]
+    println("Dimensions of complexAzimuthFFT $(size(complexAzimuthFFT))");
+    println("Dimensions of cimg              $(size(cimg))");
+
+    # Split up columns of cimg
+    cols = size(cimg)[2];
+    colsPerCPU = Int64(floor(cols / cpus));
+    
+    futures = [];
+    for i = 0:cpus-1
+        subArray = cimg[:, i * colsPerCPU + 1:(i+1) * colsPerCPU];
+        push!(futures, @spawn smallAzCompression(subArray, complexAzimuthFFT));
+    end
+    
+    # Futures are ordered, so we can just combine the results in the order of the futures in the list
+    cimgCompressed = zeros(ComplexF32, size(cimg)[1], size(cimg)[2]);
+    for i = 0:cpus-1
+        cimgCompressed[:, i * colsPerCPU + 1:(i+1) * colsPerCPU] = fetch(futures[i+1]);
+    end
+
+    return cimgCompressed;
+end
+
+@everywhere function smallAzCompression(subArray, complxAzFFT)
+    println("Starting Compression");
+    for i = 1:size(subArray)[2]
         ####### Azimuth Compression
-        lineFFT = cimg[:,i]
-        crossCorrelated = AbstractFFTs.ifft(conj.(complexAzimuthFFT).*lineFFT)
+        lineFFT = subArray[:,i]
+        crossCorrelated = AbstractFFTs.ifft(conj.(complxAzFFT).*lineFFT)
         ####### End Azimuth Compression
         
         result = abs.( crossCorrelated )
-        cimg[:,i] = result
+        subArray[:,i] = result
     end
-
-    return cimg;
+    return subArray;
 end
