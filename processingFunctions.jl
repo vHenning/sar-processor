@@ -1,4 +1,5 @@
-using FFTW
+using Distributed
+@everywhere using FFTW
 
 function deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
     # Create fourier transform of chirp. This is fast.
@@ -33,12 +34,25 @@ function deconvolve(smallSignals, fdot, sampleRate, pulseLength, pulseSamples)
     return cimg;
 end
 
-function rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0, Vr)
+function rangeMigration(cpus, cimg, c, sampleRate, PRF, wavelength, R0, Vr)
     # run an fft on each column of cimg (echos are rows here)
-    cimg = Complex{Float16}.(fft(Complex{Float32}.(cimg),(1)));
-
+    cols = size(cimg)[2];
+    colsPerCPU = Int64(floor(cols / cpus));
+    
+    futures = [];
+    for i = 0:cpus-1
+        subArray = cimg[:, i * colsPerCPU + 1:(i+1) * colsPerCPU];
+        push!(futures, @spawn smallFFTFunction(subArray));
+    end
+    
+    # Futures are ordered, so we can just combine the results in the order of the futures in the list
+    cimgTransformed = zeros(ComplexF32, size(cimg)[1], size(cimg)[2]);
+    for i = 0:cpus-1
+        cimgTransformed[:, i * colsPerCPU + 1:(i+1) * colsPerCPU] = fetch(futures[i+1]);
+    end
+    
     #now we want to shift each frequency in range space, so make each frequency bin a column for speed
-    cimg = cimg'
+    cimg = cimgTransformed'
     shape = size(cimg)
 
     slantRes = 1/2*c/sampleRate
@@ -60,6 +74,11 @@ function rangeMigration(cimg, c, sampleRate, PRF, wavelength, R0, Vr)
         cimg[:,i] = vcat(cimg[cellshift+1:shape[1],i],zeros(Complex{Float64},cellshift))
     end
     return cimg'
+end
+
+@everywhere function smallFFTFunction(subImage)
+    println("Start fourier transform");
+    return Complex{Float16}.(fft(Complex{Float32}.(subImage),(1)));
 end
 
 function azimuthCompression(cimg, vorbital, La, wavelength, R0, PRF)
